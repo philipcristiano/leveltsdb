@@ -1,2 +1,5 @@
 /deps/
 /ebin/
+/data/
+/logs/
+*.plt
