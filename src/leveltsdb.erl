@@ -1,9 +1,9 @@
 -module(leveltsdb).
 
--export([get/2,
+-export([get/3,
          open/1,
-         write/3]).
-
+         write/4
+         ]).
 
 open(Path) ->
     eleveldb:open(Path, [{create_if_missing, true}]).
@@ -11,5 +11,11 @@ open(Path) ->
 write(Ref, Key, Value) ->
     eleveldb:write(Ref, [{put, Key, Value}], [{sync, false}]).
 
-get(Ref, Key) ->
+write(Ref, Metric, TS, Value) ->
+    Key = <<"m:", Metric/binary, <<":">>/binary, TS:32/integer>>,
+    write(Ref, Key, Value),
+    ok.
+
+get(Ref, Metric, TS) ->
+    Key = <<"m:", Metric/binary, <<":">>/binary, TS:32/integer>>,
     eleveldb:get(Ref, Key, []).

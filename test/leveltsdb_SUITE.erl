@@ -20,6 +20,7 @@ write_read(Config) ->
     Dir = ?config(priv_dir, Config),
     {ok, DB} = leveltsdb:open(Dir),
     {K, V} = {<<"Key">>, <<"Value">>},
-    leveltsdb:write(DB, K, V),
-    {ok, New_V} = leveltsdb:get(DB, K),
+    TS = 1418223408,
+    leveltsdb:write(DB, K, TS, V),
+    {ok, New_V} = leveltsdb:get(DB, K, TS),
     New_V = V.
