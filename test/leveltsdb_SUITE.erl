@@ -1,16 +1,21 @@
 -module(leveltsdb_SUITE).
+
 -include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
 -export([all/0]).
 -export([groups/0, init_per_group/2, end_per_group/2]).
--export([write_read/1, write_multiple/1]).
+-export([fold_metric/1,
+         write_read/1,
+         write_multiple/1]).
 
 all() -> [{group, db}].
 
 groups() -> [{db,
-             [shuffle],
-             [write_read, write_multiple]}].
+             [],
+             [write_read,
+              write_multiple,
+              fold_metric]}].
 
 init_per_group(_, Config) ->
     Config.
@@ -40,3 +45,15 @@ write_multiple(Config) ->
     leveltsdb:write(DB, K, 1418223409, V),
     {ok, Read_V} = leveltsdb:get(DB, K, TS),
     ?assertEqual(V, Read_V).
+
+fold_metric(Config) ->
+    DB = db_for_config(Config),
+    {K, V} = {<<"Key">>, <<"Value">>},
+    TSS = [1418223409, 1418223410, 1418223411, 1418223412],
+    lists:map(fun(TS) -> leveltsdb:write(DB, K, TS, V) end, TSS),
+    Acc = leveltsdb:fold_metric(DB, K, fun acc_ts_as_list/2, []),
+    ReversedAcc = lists:reverse(Acc),
+    ?assertEqual(TSS, ReversedAcc).
+
+acc_ts_as_list({_K, TS, _V}, Acc) ->
+    [TS | Acc].

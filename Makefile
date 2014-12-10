@@ -1,4 +1,5 @@
 PROJECT=leveltsdb
+CT_OPTS = -create_priv_dir auto_per_tc
 
 
 DEPS = eleveldb
