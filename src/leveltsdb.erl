@@ -14,14 +14,15 @@ open(Path) ->
 close(Ref) ->
     eleveldb:close(Ref).
 
-write(Ref, Key, Value) ->
+write(Ref, Key, Value) when is_binary(Key) ->
     eleveldb:write(Ref, [{put, Key, erlang:term_to_binary(Value)}], [{sync, false}]).
 
-write(Ref, Metric, TS, Value) when is_integer(TS) ->
+write(Ref, Metric, TS, Value) when is_binary(Metric); is_integer(TS) ->
     Key = <<"m:", Metric/binary, <<":">>/binary, TS:32/integer>>,
     write(Ref, Key, Value).
 
-get(Ref, Metric, TS) ->
+-spec get(eleveldb:db_ref(), binary(), integer()) -> {ok, _}.
+get(Ref, Metric, TS) when is_binary(Metric); is_integer(TS) ->
     Key = <<"m:", Metric/binary, <<":">>/binary, TS:32/integer>>,
     {ok, Value} = eleveldb:get(Ref, Key, []),
     {ok, erlang:binary_to_term(Value)}.
