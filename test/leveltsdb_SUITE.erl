@@ -7,6 +7,7 @@
 -export([groups/0, init_per_group/2, end_per_group/2]).
 -export([fold_metric/1,
          fold_metric_large_range/1,
+         fold_metric_with_range/1,
          write_read/1,
          write_multiple/1]).
 
@@ -17,7 +18,8 @@ groups() -> [{db,
              [write_read,
               write_multiple,
               fold_metric,
-              fold_metric_large_range]}].
+              fold_metric_large_range,
+              fold_metric_with_range]}].
 
 init_per_group(_, Config) ->
     Config.
@@ -65,6 +67,15 @@ fold_metric_large_range(Config) ->
     Acc = leveltsdb:fold_metric(DB, K, fun acc_ts_as_list/2, []),
     ReversedAcc = lists:reverse(Acc),
     ?assertEqual(TSS, ReversedAcc).
+
+fold_metric_with_range(Config) ->
+    DB = db_for_config(Config),
+    {K, V} = {<<"Key">>, <<"Value">>},
+    TSS = [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200],
+    lists:map(fun(TS) -> leveltsdb:write(DB, K, TS, V) end, TSS),
+    Acc = leveltsdb:fold_metric(DB, K, 130, 170, fun acc_ts_as_list/2, []),
+    ReversedAcc = lists:reverse(Acc),
+    ?assertEqual([130, 140, 150, 160, 170], ReversedAcc).
 
 acc_ts_as_list({_K, TS, _V}, Acc) ->
     [TS | Acc].
