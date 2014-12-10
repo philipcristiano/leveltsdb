@@ -19,8 +19,7 @@ write(Ref, Key, Value) ->
 
 write(Ref, Metric, TS, Value) when is_integer(TS) ->
     Key = <<"m:", Metric/binary, <<":">>/binary, TS:32/integer>>,
-    write(Ref, Key, Value),
-    ok.
+    write(Ref, Key, Value).
 
 get(Ref, Metric, TS) ->
     Key = <<"m:", Metric/binary, <<":">>/binary, TS:32/integer>>,
