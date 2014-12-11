@@ -77,5 +77,5 @@ fold_metric_with_range(Config) ->
     ReversedAcc = lists:reverse(Acc),
     ?assertEqual([130, 140, 150, 160, 170], ReversedAcc).
 
-acc_ts_as_list({_K, TS, _V}, Acc) ->
+acc_ts_as_list({TS, _V}, Acc) ->
     [TS | Acc].

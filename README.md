@@ -25,17 +25,17 @@ Write some data, including the DB Ref, the metric name, timestamp, and value
 
 Fold over all `<<"key">>`s
 
-    7> leveltsdb:fold_metric(Ref, <<"key">>, fun({Key, TS, Value}, Acc) -> [{Key, TS, Value}|Acc] end, []).
-    {<<"key">>,1004,<<"value-4">>},
-    {<<"key">>,1003,<<"value-3">>},
-    {<<"key">>,1002,<<"value-2">>},
-    {<<"key">>,1001,<<"value-1">>},
-    {<<"key">>,1000,<<"value">>}]
+    7> leveltsdb:fold_metric(Ref, <<"key">>, fun({TS, Value}, Acc) -> [{TS, Value}|Acc] end, []).
+    {1004,<<"value-4">>},
+    {1003,<<"value-3">>},
+    {1002,<<"value-2">>},
+    {1001,<<"value-1">>},
+    {1000,<<"value">>}]
 
 
 Fold over a specific TS range for a key
 
-    9> leveltsdb:fold_metric(Ref, <<"key">>, 1001, 1003, fun({Key, TS, Value}, Acc) -> [{Key, TS, Value}|Acc] end, []).
-    [{<<"key">>,1003,<<"value-3">>},
-     {<<"key">>,1002,<<"value-2">>},
-     {<<"key">>,1001,<<"value-1">>}]
+    9> leveltsdb:fold_metric(Ref, <<"key">>, 1001, 1003, fun({TS, Value}, Acc) -> [{TS, Value}|Acc] end, []).
+    [{1003,<<"value-3">>},
+     {1002,<<"value-2">>},
+     {1001,<<"value-1">>}]

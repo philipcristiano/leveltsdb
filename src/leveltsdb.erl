@@ -53,7 +53,7 @@ fold_while_metric(MetricName, Callback) ->
         case Key of
             <<"m:", MetricName:PrefixLength/binary, ":", EncodedTS:32/integer>> ->
 
-                Callback({MetricName, EncodedTS, erlang:binary_to_term(Value)}, Acc);
+                Callback({EncodedTS, erlang:binary_to_term(Value)}, Acc);
             _ ->
                 throw({done, Acc})
         end
@@ -68,7 +68,7 @@ fold_range(MetricName, EncodedEndTS, Callback) ->
                     true ->
                         throw({done, Acc});
                     false ->
-                        Callback({MetricName, EncodedTS, erlang:binary_to_term(Value)}, Acc)
+                        Callback({EncodedTS, erlang:binary_to_term(Value)}, Acc)
                end;
             _ ->
                 throw({done, Acc})
