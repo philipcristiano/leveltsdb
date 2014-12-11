@@ -1,6 +1,7 @@
 -module(leveltsdb).
 
 -export([get/3,
+         aggregate/6,
          open/1,
          close/1,
          fold_metric/4,
@@ -47,6 +48,24 @@ fold_metric(Ref, Metric, TS1, TS2, Func, InAcc) ->
             {done, Val} -> Val
         end,
     Acc.
+
+aggregate(Ref, Metric, TS1, TS2, Alg, Opts) ->
+    Key = <<"m:", Metric/binary, <<":">>/binary, TS1:32/integer>>,
+    {F, Agg} = leveltsdb_buckets:online_fold(
+                proplists:get_value(aggregation, Opts, Alg),
+                proplists:get_value(bucket_size, Opts, 60)),
+    Acc =
+        try
+            eleveldb:fold(Ref, fold_range(Metric, TS2, F), Agg, [{first_key, Key}])
+        catch
+            {done, Val} -> Val
+        end,
+    ListAcc = F({eoi, eoi}, Acc),
+    ForwardAcc = lists:reverse(ListAcc),
+    {ok, ForwardAcc}.
+
+
+%% Internal
 
 fold_while_metric(MetricName, Callback) ->
     PrefixLength = size(MetricName),
