@@ -16,6 +16,7 @@
          first_fold_float/1,
          same_bucket/1,
          multiple_buckets/1,
+         avg_no_items_test/1,
          avg_first_test/1,
          avg_two_items_test/1,
          avg_three_items_test/1,
@@ -35,6 +36,7 @@ groups() -> [{buckets,
                first_fold_float,
                same_bucket,
                multiple_buckets,
+               avg_no_items_test,
                avg_first_test,
                avg_two_items_test,
                avg_three_items_test,
@@ -69,6 +71,11 @@ multiple_buckets(_Config) ->
                               {61, 12},
                               {62, 13}]),
     [?_assertEqual([{60, 12}, {0, 10}], Acc)].
+
+avg_no_items_test(_Config) ->
+    {F, Acc} = leveltsdb_buckets:online_fold(<<"avg">>, 60),
+    EndAcc = lists:foldl(F, Acc, []),
+    ?assertEqual([], EndAcc).
 
 avg_first_test(_Config) ->
     {F, Acc} = leveltsdb_buckets:online_fold(<<"avg">>, 60),
