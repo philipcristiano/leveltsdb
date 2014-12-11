@@ -5,7 +5,8 @@
          close/1,
          fold_metric/4,
          fold_metric/6,
-         write/4
+         write/4,
+         write/5
          ]).
 
 open(Path) ->
@@ -14,12 +15,12 @@ open(Path) ->
 close(Ref) ->
     eleveldb:close(Ref).
 
-write(Ref, Key, Value) when is_binary(Key) ->
-    eleveldb:write(Ref, [{put, Key, erlang:term_to_binary(Value)}], [{sync, false}]).
-
 write(Ref, Metric, TS, Value) when is_binary(Metric); is_integer(TS) ->
+    write(Ref, Metric, TS, Value, [{sync, false}]).
+
+write(Ref, Metric, TS, Value, Opts) when is_binary(Metric); is_integer(TS) ->
     Key = <<"m:", Metric/binary, <<":">>/binary, TS:32/integer>>,
-    write(Ref, Key, Value).
+    write_to_db(Ref, Key, Value, Opts).
 
 -spec get(eleveldb:db_ref(), binary(), integer()) -> {ok, _}.
 get(Ref, Metric, TS) when is_binary(Metric); is_integer(TS) ->
@@ -74,3 +75,6 @@ fold_range(MetricName, EncodedEndTS, Callback) ->
                 throw({done, Acc})
         end
     end.
+
+write_to_db(Ref, Key, Value, Opts) when is_binary(Key) ->
+    eleveldb:write(Ref, [{put, Key, erlang:term_to_binary(Value)}], Opts).
