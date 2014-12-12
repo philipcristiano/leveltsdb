@@ -88,9 +88,8 @@ avg_buckets(Config) ->
     leveltsdb:write(DB, K, 120, 6),
     leveltsdb:write(DB, K, 121, 8),
     leveltsdb:write(DB, <<"FOOODO">>, 1000, 8),
-    Acc = leveltsdb:aggregate(DB, K, 0, 180, <<"avg">>, []),
-    ReversedAcc = lists:reverse(Acc),
-    ?assertEqual([130, 140, 150, 160, 170], ReversedAcc).
+    {ok, Acc} = leveltsdb:aggregate(DB, K, 0, 180, <<"avg">>, []),
+    ?assertEqual([{60, 2.0}, {120, 7.0}], Acc).
 
 acc_ts_as_list({TS, _V}, Acc) ->
     [TS | Acc].
