@@ -74,7 +74,7 @@ multiple_buckets(_Config) ->
 
 avg_no_items_test(_Config) ->
     {F, Acc} = leveltsdb_buckets:online_fold(<<"avg">>, 60),
-    EndAcc = lists:foldl(F, Acc, []),
+    EndAcc = lists:foldl(F, Acc, [{eoi, eoi}]),
     ?assertEqual([], EndAcc).
 
 avg_first_test(_Config) ->

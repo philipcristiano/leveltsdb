@@ -30,7 +30,10 @@ online_fold(Alg, Interval) ->
     end.
 
 fold_avg({eoi, eoi}, _Acc=#avg_acc{bucket=undefined, rest=Rest}, _Bucket) ->
-    Rest;
+    case Rest of
+        undefined -> [];
+        _ -> Rest
+    end;
 fold_avg({eoi, eoi}, _Acc=#avg_acc{bucket=CurBucket, val=Val,rest=undefined}, _Bucket) ->
     [{CurBucket, Val}];
 fold_avg({eoi, eoi}, _Acc=#avg_acc{bucket=CurBucket, val=Val,rest=Rest}, _Bucket) ->
