@@ -4,8 +4,9 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -export([all/0]).
--export([groups/0, init_per_group/2, end_per_group/2]).
--export([fold_metric/1,
+-export([groups/0, init_per_testcase/2, end_per_testcase/2]).
+-export([avg_buckets/1,
+         fold_metric/1,
          fold_metric_large_range/1,
          fold_metric_with_range/1,
          write_read/1,
@@ -19,18 +20,20 @@ groups() -> [{db,
               write_multiple,
               fold_metric,
               fold_metric_large_range,
-              fold_metric_with_range]}].
+              fold_metric_with_range,
+              avg_buckets]}].
 
-init_per_group(_, Config) ->
-    Config.
+init_per_testcase(_, Config) ->
+    Dir = ?config(priv_dir, Config),
+    {ok, DB} = leveltsdb:open(Dir),
+    [{db, DB} | Config].
 
-end_per_group(_, _Config) ->
+end_per_testcase(_, Config) ->
+    ok = leveltsdb:close(db_for_config(Config)),
     ok.
 
 db_for_config(Config) ->
-    Dir = ?config(priv_dir, Config),
-    {ok, DB} = leveltsdb:open(Dir),
-    DB.
+    ?config(db, Config).
 
 write_read(Config) ->
     DB = db_for_config(Config),
@@ -76,6 +79,18 @@ fold_metric_with_range(Config) ->
     Acc = leveltsdb:fold_metric(DB, K, 130, 170, fun acc_ts_as_list/2, []),
     ReversedAcc = lists:reverse(Acc),
     ?assertEqual([130, 140, 150, 160, 170], ReversedAcc).
+
+avg_buckets(Config) ->
+    DB = db_for_config(Config),
+    K = <<"Key">>,
+    leveltsdb:write(DB, K, 100, 1),
+    leveltsdb:write(DB, K, 101, 2),
+    leveltsdb:write(DB, K, 102, 3),
+    leveltsdb:write(DB, K, 120, 6),
+    leveltsdb:write(DB, K, 121, 8),
+    leveltsdb:write(DB, <<"FOOODO">>, 1000, 8),
+    {ok, Acc} = leveltsdb:aggregate(DB, K, 0, 180, <<"avg">>, []),
+    ?assertEqual([{60, 2.0}, {120, 7.0}], Acc).
 
 acc_ts_as_list({TS, _V}, Acc) ->
     [TS | Acc].
