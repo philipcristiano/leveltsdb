@@ -10,6 +10,7 @@
          fold_metric_large_range/1,
          fold_metric_with_range/1,
          all_metrics/1,
+         prefix_metrics/1,
          write_read/1,
          write_multiple/1]).
 
@@ -23,6 +24,7 @@ groups() -> [{db,
               fold_metric_large_range,
               fold_metric_with_range,
               all_metrics,
+              prefix_metrics,
               avg_buckets]}].
 
 init_per_testcase(_, Config) ->
@@ -101,6 +103,15 @@ all_metrics(Config) ->
     lists:map(fun(M) -> leveltsdb:write(DB, M, 100, V) end, Metrics),
     {ok, ReturnedMetrics} = leveltsdb:metrics(DB),
     ?assertEqual(Metrics, ReturnedMetrics).
+
+prefix_metrics(Config) ->
+    DB = db_for_config(Config),
+    V = 0,
+    Metrics = [<<"a">>, <<"ab">>, <<"abc">>, <<"abd">>, <<"ac">>],
+    lists:map(fun(M) -> leveltsdb:write(DB, M, 100, V) end, Metrics),
+    {ok, ReturnedMetrics} = leveltsdb:metrics_with_prefix(DB, <<"ab">>),
+    ?assertEqual([<<"ab">>,<<"abc">>,<<"abd">>], ReturnedMetrics).
+
 
 acc_ts_as_list({TS, _V}, Acc) ->
     [TS | Acc].

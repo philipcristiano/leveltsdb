@@ -7,6 +7,7 @@
          fold_metric/4,
          fold_metric/6,
          metrics/1,
+         metrics_with_prefix/2,
          write/4,
          write/5
          ]).
@@ -76,6 +77,22 @@ metrics(Ref) ->
         end,
     {ok, lists:reverse(Acc)}.
 
+metrics_with_prefix(Ref, Prefix) ->
+    Key = <<"k:", Prefix/binary>>,
+    Acc =
+        try
+            eleveldb:fold(Ref, fold_while_prefix(Prefix), [], [{first_key, Key}])
+        catch
+            {done, Val} -> Val
+        end,
+    {ok, lists:reverse(Acc)}.
+
+metrics(_Ref, StartMetric) ->
+    ok.
+metrics(_Ref, StartMetric, StopMetric) ->
+    ok.
+
+
 %% Internal
 %%
 fold_while_keys() ->
@@ -84,6 +101,17 @@ fold_while_keys() ->
             <<"k:", MetricName/binary >> ->
 
                 [MetricName |Acc];
+            _ ->
+                throw({done, Acc})
+        end
+    end.
+
+fold_while_prefix(Prefix) ->
+    PrefixLength = size(Prefix),
+    fun ({Key, _Value}, Acc)->
+        case Key of
+            <<"k:", Prefix:PrefixLength/binary, Rest/binary>> ->
+                [<<Prefix/binary, Rest/binary>> |Acc];
             _ ->
                 throw({done, Acc})
         end
