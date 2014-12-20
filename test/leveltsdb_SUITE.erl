@@ -4,7 +4,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -export([all/0]).
--export([groups/0, init_per_group/2, end_per_group/2]).
+-export([groups/0, init_per_testcase/2, end_per_testcase/2]).
 -export([avg_buckets/1,
          fold_metric/1,
          fold_metric_large_range/1,
@@ -23,16 +23,17 @@ groups() -> [{db,
               fold_metric_with_range,
               avg_buckets]}].
 
-init_per_group(_, Config) ->
-    Config.
+init_per_testcase(_, Config) ->
+    Dir = ?config(priv_dir, Config),
+    {ok, DB} = leveltsdb:open(Dir),
+    [{db, DB} | Config].
 
-end_per_group(_, _Config) ->
+end_per_testcase(_, Config) ->
+    ok = leveltsdb:close(db_for_config(Config)),
     ok.
 
 db_for_config(Config) ->
-    Dir = ?config(priv_dir, Config),
-    {ok, DB} = leveltsdb:open(Dir),
-    DB.
+    ?config(db, Config).
 
 write_read(Config) ->
     DB = db_for_config(Config),
