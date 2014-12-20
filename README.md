@@ -55,3 +55,31 @@ To set a new bucket size you can pass the option `bucket_size`
     {ok,[{1000,0.5},{1002,2.5},{1004,4.5}]}
 
 
+
+## Getting the names of the metrics in the DB
+
+First we store something other than `<<"key">>`
+
+    23> leveltsdb:write(Ref, <<"a">>, 1, 1).
+    ok
+    24> leveltsdb:write(Ref, <<"ab">>, 1, 1).
+    ok
+    25> leveltsdb:write(Ref, <<"ac">>, 1, 1).
+    ok
+    26> leveltsdb:write(Ref, <<"b">>, 1, 1).
+    ok
+    27> leveltsdb:write(Ref, <<"c">>, 1, 1).
+    ok
+    28> leveltsdb:write(Ref, <<"de">>, 1, 1).
+
+Then we can list all metrics
+
+    29> leveltsdb:metrics(Ref).
+    {ok,[<<"a">>,<<"ab">>,<<"ac">>,<<"b">>,<<"c">>,<<"de">>]}
+
+Or just metrics with a particular prefix
+
+    30> leveltsdb:metrics_with_prefix(Ref, <<"a">>).
+    {ok,[<<"a">>,<<"ab">>,<<"ac">>]}
+
+Each metric name is stored as a separate key in LevelDB so that lookups don't require going over every metric in the DB.
