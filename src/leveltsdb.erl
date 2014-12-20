@@ -6,6 +6,7 @@
          close/1,
          fold_metric/4,
          fold_metric/6,
+         metrics/1,
          write/4,
          write/5
          ]).
@@ -21,7 +22,9 @@ write(Ref, Metric, TS, Value) when is_binary(Metric); is_integer(TS) ->
 
 write(Ref, Metric, TS, Value, Opts) when is_binary(Metric); is_integer(TS) ->
     Key = <<"m:", Metric/binary, <<":">>/binary, TS:32/integer>>,
-    write_to_db(Ref, Key, Value, Opts).
+    KeyKey = <<"k:", Metric/binary>>,
+    ok = write_to_db(Ref, KeyKey, <<"">>, Opts),
+    ok = write_to_db(Ref, Key, Value, Opts).
 
 -spec get(eleveldb:db_ref(), binary(), integer()) -> {ok, _}.
 get(Ref, Metric, TS) when is_binary(Metric); is_integer(TS) ->
@@ -64,8 +67,27 @@ aggregate(Ref, Metric, TS1, TS2, Alg, Opts) ->
     ForwardAcc = lists:reverse(ListAcc),
     {ok, ForwardAcc}.
 
+metrics(Ref) ->
+    Acc =
+        try
+            eleveldb:fold(Ref, fold_while_keys(), [], [{first_key, <<"k:">>}])
+        catch
+            {done, Val} -> Val
+        end,
+    {ok, lists:reverse(Acc)}.
 
 %% Internal
+%%
+fold_while_keys() ->
+    fun ({Key, _Value}, Acc)->
+        case Key of
+            <<"k:", MetricName/binary >> ->
+
+                [MetricName |Acc];
+            _ ->
+                throw({done, Acc})
+        end
+    end.
 
 fold_while_metric(MetricName, Callback) ->
     PrefixLength = size(MetricName),
