@@ -87,12 +87,6 @@ metrics_with_prefix(Ref, Prefix) ->
         end,
     {ok, lists:reverse(Acc)}.
 
-metrics(_Ref, StartMetric) ->
-    ok.
-metrics(_Ref, StartMetric, StopMetric) ->
-    ok.
-
-
 %% Internal
 %%
 fold_while_keys() ->
