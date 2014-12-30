@@ -4,4 +4,8 @@ otp_release:
   - R16B02
   - 17.0
   - 17.1
+
+env:
+  - ELEVELDB_VERSION=1.1.0
+  - ELEVELDB_VERSION=2.0
 script: make deps tests
