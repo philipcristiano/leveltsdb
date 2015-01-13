@@ -9,6 +9,7 @@
          fold_metric/1,
          fold_metric_large_range/1,
          fold_metric_with_range/1,
+         fold_data/1,
          all_metrics/1,
          prefix_metrics/1,
          write_read/1,
@@ -23,6 +24,7 @@ groups() -> [{db,
               fold_metric,
               fold_metric_large_range,
               fold_metric_with_range,
+              fold_data,
               all_metrics,
               prefix_metrics,
               avg_buckets]}].
@@ -84,6 +86,22 @@ fold_metric_with_range(Config) ->
     ReversedAcc = lists:reverse(Acc),
     ?assertEqual([130, 140, 150, 160, 170], ReversedAcc).
 
+fold_data(Config) ->
+    DB = db_for_config(Config),
+    V = <<"Value">>,
+    TSS = [100, 200],
+    lists:map(fun(TS) -> leveltsdb:write(DB, <<"K1">>, TS, V) end, TSS),
+    lists:map(fun(TS) -> leveltsdb:write(DB, <<"K2">>, TS, V) end, TSS),
+    lists:map(fun(TS) -> leveltsdb:write(DB, <<"K3">>, TS, V) end, TSS),
+    Acc = leveltsdb:fold_data(DB, fun acc_all_as_list/2, []),
+    ReversedAcc = lists:reverse(Acc),
+    ?assertEqual([{<<"K1">>, 100, V},
+                  {<<"K1">>, 200, V},
+                  {<<"K2">>, 100, V},
+                  {<<"K2">>, 200, V},
+                  {<<"K3">>, 100, V},
+                  {<<"K3">>, 200, V}], ReversedAcc).
+
 avg_buckets(Config) ->
     DB = db_for_config(Config),
     K = <<"Key">>,
@@ -115,3 +133,6 @@ prefix_metrics(Config) ->
 
 acc_ts_as_list({TS, _V}, Acc) ->
     [TS | Acc].
+
+acc_all_as_list({Metric, TS, V}, Acc) ->
+    [{Metric, TS, V} | Acc].

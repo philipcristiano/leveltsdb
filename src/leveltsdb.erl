@@ -4,6 +4,7 @@
          aggregate/6,
          open/1,
          close/1,
+         fold_data/3,
          fold_metric/4,
          fold_metric/6,
          metrics/1,
@@ -32,6 +33,17 @@ get(Ref, Metric, TS) when is_binary(Metric); is_integer(TS) ->
     Key = <<"m:", Metric/binary, <<":">>/binary, TS:32/integer>>,
     {ok, Value} = eleveldb:get(Ref, Key, []),
     {ok, erlang:binary_to_term(Value)}.
+
+fold_data(Ref, Func, InAcc) ->
+    Key = <<"m:">>,
+    Acc =
+        try
+            eleveldb:fold(Ref, fold_while_data(Func), InAcc, [{first_key, Key}])
+        catch
+            {done, Val} -> Val
+        end,
+    Acc.
+
 
 fold_metric(Ref, Metric, Func, InAcc) ->
     Key = <<"m:", Metric/binary, <<":">>/binary, 0>>,
@@ -81,7 +93,7 @@ metrics_with_prefix(Ref, Prefix) ->
     Key = <<"k:", Prefix/binary>>,
     Acc =
         try
-            eleveldb:fold(Ref, fold_while_prefix(Prefix), [], [{first_key, Key}])
+            eleveldb:fold(Ref, fold_while_metric_prefix(Prefix), [], [{first_key, Key}])
         catch
             {done, Val} -> Val
         end,
@@ -100,7 +112,19 @@ fold_while_keys() ->
         end
     end.
 
-fold_while_prefix(Prefix) ->
+fold_while_data(Func) ->
+    fun ({Key, Value}, Acc)->
+        case Key of
+            <<"m:", Rest/binary >> ->
+                [Metric, <<EncodedTS:32/integer>>] = binary:split(Rest, <<":">>, []),
+
+                Func({Metric, EncodedTS, erlang:binary_to_term(Value)}, Acc);
+            _ ->
+                throw({done, Acc})
+        end
+    end.
+
+fold_while_metric_prefix(Prefix) ->
     PrefixLength = size(Prefix),
     fun ({Key, _Value}, Acc)->
         case Key of
